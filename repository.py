@@ -8,8 +8,9 @@ from bson.json_util import loads
 from bson.objectid import ObjectId
 
 load_dotenv()
-client = MongoClient('mongodb://mongo:AvK7b6FjmSG1iSFUTQ3S@containers-us-west-73.railway.app:6831')
-db = client.test
+#client = MongoClient('mongodb://mongo:AvK7b6FjmSG1iSFUTQ3S@containers-us-west-73.railway.app:6831')
+clien = MongoClient('mongodb+srv://superadmin:4yFG5byD88@open-swarm.hh45dvy.mongodb.net/?retryWrites=true&w=majority')
+db = client.main
 collection = db.locations
 
 # {
