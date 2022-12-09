@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Location app</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+
+<section class="section" style="padding: 1rem 1rem">
+    <div class="tabs">
+        <ul>
+            <li class="is-active"><a>add location</a></li>
+            <li><a href="/locations">locations</a></li>
+            <!--    <li><a>Videos</a></li>-->
+        </ul>
+    </div>
+    <div class="container">
+
+        <div id="app">
+            <div v-if="geoapi">geolocation 🌎 is on
+                <button v-on:click="reset" class="button is-small">reset fields</button>
+            </div>
+
+            <div v-else class="has-background-danger-dark">geolocation is off, try to allow it</div>
+            <div>
+                <br><input class="input is-large" type="text" v-model="title" placeholder="title of good cafe">
+            </div>
+            <div>
+                    <textarea class="textarea is-large" id="w3review" v-model="review"
+                              placeholder="description, is there wifi, electricity etc."
+                              rows="4"></textarea>
+            </div>
+            <div>
+                <button v-on:click="getLocation" class="button is-primary is-large">save location</button>
+            </div>
+            <br>
+            <div>last locations:</div>
+            <ul v-for="loc in lastLocations">
+                <button v-on:click="remove(loc.id)" class="button is-small">delete</button>
+                {{loc.title}}-{{loc.review}}
+            </ul>
+        </div>
+    </div>
+    <br>
+    <p>this app is an open source alternative to Swarm mobile app and let you fully control locations, where you
+        checkin
+    </p>
+</section>
+
+<script>
+    const app = new Vue({
+        el: '#app',
+        created: function () {
+            navigator.geolocation.getCurrentPosition(() => {
+                this.geoapi = true
+            }, () => this.geoapi = false)
+            this.getLastLocations()
+        },
+        data: {
+            message: 'Hello Vue!',
+            geoapi: false,
+            title: '',
+            review: '',
+            lastLocations: []
+        },
+        methods: {
+            greet: function (event) {
+                alert('hey')
+            },
+            reset: function () {
+                this.title = '';
+                this.review = ''
+            },
+            getLocation() {
+                navigator.geolocation.getCurrentPosition(position => {
+                        const {latitude, longitude} = position.coords;
+                        this.message = "Latitude: " + latitude +
+                            "<br>Longitude: " + longitude
+
+                        const requestOptions = {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({
+                                long: position.coords.latitude,
+                                lat: position.coords.longitude,
+                                title: this.title,
+                                review: this.review,
+                            })
+                        };
+                        fetch("/api", requestOptions)
+                            .then(response => {
+                                return response.json()
+                            })
+                            .then(data => {
+                                this.message = data.id
+                                this.getLastLocations()
+                            });
+                    },
+                    () => {
+                        this.geoapi = false
+                    })
+            },
+            getLastLocations: function () {
+                fetch("/api/last").then((response) => {
+                    return response.json();
+                }).then((data) => {
+                    this.lastLocations = data
+                })
+            },
+            remove: function (id) {
+                console.log('deleting ' + id)
+
+                const requestOptions = {
+                    method: "DELETE",
+                    headers: {"Content-Type": "application/json"},
+                };
+                fetch("/api/" + id, requestOptions).then(() => {
+                    this.getLastLocations()
+                })
+            },
+        }
+    })
+</script>
+</body>
+</html>
